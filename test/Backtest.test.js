@@ -1,17 +1,20 @@
 require("mocha");
 const { assert } = require("chai");
-const { Backtest } = require("../lib/BacktestService");
+const { Backtest } = require("../lib/Backtest");
+const { Strategy } = require("../lib/Strategy");
 const fs = require("fs");
 
-describe.skip("BacktestService", () => {
+describe("Backtest", () => {
     it("execute", function (done) {
-        // загрузить данные из файла
-        // передать в бэктест
-        // передать начальный баланс
         const candles = JSON.parse(fs.readFileSync("./test/data/data.json"));
-        // module.exports = (data: Array<{ candle: ICandle; indicators: Array<{ key: string; outputs: number[]; }>; indicator: (key: string) => nuber[]; }>) => number
-        const strategy = {
+        const strategyFunction = (data) => {
+            const max0 = data[0].indicator("max")[0];
+            const max1 = data[1].indicator("max")[0];
+            return max0 > max1 ? "buy" : "sell";
+        };
+        const strategy = new Strategy({
             warmup: 1,
+            strategyFunction,
             indicatorInputs: [
                 {
                     key: "max",
@@ -19,27 +22,14 @@ describe.skip("BacktestService", () => {
                     options: [2],
                 },
             ],
-            code:
-                '{ const max0 = data[0].indicator("max")[0]; const max1 = data[1].indicator("max")[0]; return max0 > max1 ? 1 : -1; }',
-        };
+        });
 
-        const options = {
-            candles,
-            initialBalance: 100,
-            strategy,
-        };
-
+        const options = { candles, strategy, initialBalance: 100 };
         const backtest = new Backtest(options);
+
         backtest.execute().then(() => {
-            // проверить что все в порядке
-            // результат можно выгрузить в файл
-            const { trades } = backtestService;
-            console.log(trades);
-
-            assert.isArray(trades, "массив данных");
-            assert.isObject(trades[0], "первый элемент является объектом");
-            assert.isAtLeast(trades.length, 1, "длина больше 1");
-
+            console.log(backtest.finalBalance);
+            // console.log(backtest.trades);
             done();
         });
     });
