@@ -1,0 +1,43 @@
+{
+  "name": "backtest",
+  "version": "1.0.0-alpha",
+  "description": "Import market data from exchage",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/cryptokupets/backtest.git"
+  },
+  "homepage": "https://github.com/cryptokupets/backtest",
+  "bugs": {
+    "url": "https://github.com/cryptokupets/backtest/issues"
+  },
+  "scripts": {
+    "build": "tsc",
+    "test": "mocha"
+  },
+  "keywords": [
+    "candles"
+  ],
+  "author": {
+    "name": "Dmitry Fokin"
+  },
+  "engines": {
+    "node": ">= 12.10.0",
+    "npm": ">= 6.11.3"
+  },
+  "license": "MIT",
+  "main": "lib/index.js",
+  "devDependencies": {
+    "@tsconfig/node12": "^1.0.7",
+    "@types/node": "^12.7.4",
+    "chai": "^4.2.0",
+    "mocha": "^6.2.1",
+    "tslint": "^5.19.0",
+    "typescript": "^3.6.2"
+  },
+  "files": [
+    "lib/**/*"
+  ],
+  "dependencies": {
+    "tulind": "^0.8.18"
+  }
+}
