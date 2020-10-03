@@ -1,4 +1,5 @@
 import { Advisor } from "./Advisor";
+import { IAdvice } from "./IAdvice";
 import { ICandle } from "./ICandle";
 import { ITrade } from "./ITrade";
 import { Strategy } from "./Strategy";
@@ -8,66 +9,79 @@ export class Backtest {
     public strategy!: Strategy;
     public initialBalance: number = 0;
     public finalBalance: number = 0;
-    public trades: any[] = [];
+    public trades: ITrade[] = [];
+    public stoplossLimit: number = 0; // доля от цены открытия, на которую рыночная цена может упасть
 
-    constructor(options: {
-        candles: ICandle[];
-        strategy: Strategy;
-        initialBalance: number;
+    private currencyBalance: number = 0;
+    private assetBalance: number = 0;
+    private advices!: IAdvice[];
+    private stoplossPrice: number = 0;
+
+    constructor(options?: {
+        candles?: ICandle[];
+        strategy?: Strategy;
+        initialBalance?: number;
+        stoplossLimit?: number;
     }) {
         Object.assign(this, options);
     }
 
     public async execute(): Promise<void> {
-        // теперь взять всё то, что сделано в тестах и преобразовать в трейды
-        // получить советы
-        const { candles, strategy, initialBalance, trades } = this;
-        const advices = await Advisor.execute(candles, strategy);
-        let currencyBalance = initialBalance;
-        let assetBalance = 0;
+        const { candles, strategy, initialBalance } = this;
+        this.currencyBalance = initialBalance;
+        this.advices = await Advisor.execute(candles, strategy);
+        candles.forEach(this.candleHandler.bind(this));
+        this.finalBalance = this.currencyBalance
+            ? this.currencyBalance
+            : this.assetBalance / candles[candles.length - 1].close;
+    }
 
-        advices.forEach((a) => {
-            const { advice, time } = a;
-            let trade: ITrade;
-            if (advice === "buy" && currencyBalance > 0) {
-                const candle = candles.find((c) => c.time === time);
-                if (candle) {
-                    const { close: price } = candle;
-                    const amount = currencyBalance;
-                    const quantity = amount / price;
-                    trade = {
-                        time,
-                        side: "buy",
-                        quantity,
-                        price,
-                        amount,
-                    };
-                    currencyBalance = 0;
-                    assetBalance = quantity;
-                    trades.push(trade);
-                }
-            } else if (advice === "sell" && assetBalance > 0) {
-                const candle = candles.find((c) => c.time === time);
-                if (candle) {
-                    const { close: price } = candle;
-                    const quantity = assetBalance;
-                    const amount = quantity * price;
-                    trade = {
-                        time,
-                        side: "sell",
-                        quantity,
-                        price,
-                        amount,
-                    };
-                    assetBalance = 0;
-                    currencyBalance = amount;
-                    trades.push(trade);
-                }
+    private candleHandler(candle: ICandle) {
+        const { time, close: price } = candle;
+        const advice = this.advices.find((a) => a.time === time);
+
+        if (advice) {
+            const { side } = advice;
+            if (side === "buy" && this.currencyBalance > 0) {
+                this.buy(time, price);
+            } else if (side === "sell" && this.assetBalance > 0) {
+                this.sell(time, price);
             }
-        });
+        }
 
-        this.finalBalance = currencyBalance
-            ? currencyBalance
-            : assetBalance / candles[candles.length - 1].close;
+        if (price < this.stoplossPrice && this.assetBalance > 0) {
+            this.sell(time, price);
+        }
+    }
+
+    private buy(time: string, price: number) {
+        this.stoplossPrice = price * this.stoplossLimit;
+        const amount = this.currencyBalance;
+        const quantity = amount / price;
+        const trade: ITrade = {
+            time,
+            side: "buy",
+            quantity,
+            price,
+            amount,
+        };
+        this.currencyBalance = 0;
+        this.assetBalance = quantity;
+        this.trades.push(trade);
+    }
+
+    private sell(time: string, price: number) {
+        const quantity = this.assetBalance;
+        const amount = quantity * price;
+        const trade: ITrade = {
+            time,
+            side: "sell",
+            quantity,
+            price,
+            amount,
+        };
+        this.assetBalance = 0;
+        this.currencyBalance = amount;
+        this.trades.push(trade);
     }
 }

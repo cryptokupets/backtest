@@ -24,7 +24,12 @@ describe("Backtest", () => {
             ],
         });
 
-        const options = { candles, strategy, initialBalance: 100 };
+        const options = {
+            candles,
+            strategy,
+            initialBalance: 100,
+            stoplossLimit: 0.999,
+        };
         const backtest = new Backtest(options);
 
         backtest.execute().then(() => {

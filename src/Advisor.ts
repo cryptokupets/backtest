@@ -59,10 +59,10 @@ export class Advisor {
 
             const advices: IAdvice[] = [];
             for (let i = warmup; i < data.length; i++) {
-                const advice = strategyFunction(data.slice(i - warmup, i + 1));
+                const side = strategyFunction(data.slice(i - warmup, i + 1));
                 advices.push({
                     time: data[i].time,
-                    advice,
+                    side,
                 });
             }
 
