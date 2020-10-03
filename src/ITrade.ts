@@ -4,4 +4,5 @@ export interface ITrade {
     price: number;
     quantity: number;
     amount: number;
+    fee: number;
 }

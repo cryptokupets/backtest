@@ -29,12 +29,13 @@ describe("Backtest", () => {
             strategy,
             initialBalance: 100,
             stoplossLimit: 0.999,
+            fee: 0.001,
         };
         const backtest = new Backtest(options);
 
         backtest.execute().then(() => {
             console.log(backtest.finalBalance);
-            // console.log(backtest.trades);
+            console.log(backtest.trades);
             done();
         });
     });

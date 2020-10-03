@@ -11,6 +11,7 @@ export class Backtest {
     public finalBalance: number = 0;
     public trades: ITrade[] = [];
     public stoplossLimit: number = 0; // доля от цены открытия, на которую рыночная цена может упасть
+    public fee: number = 0; // доля
 
     private currencyBalance: number = 0;
     private assetBalance: number = 0;
@@ -22,6 +23,7 @@ export class Backtest {
         strategy?: Strategy;
         initialBalance?: number;
         stoplossLimit?: number;
+        fee?: number;
     }) {
         Object.assign(this, options);
     }
@@ -56,7 +58,8 @@ export class Backtest {
 
     private buy(time: string, price: number) {
         this.stoplossPrice = price * this.stoplossLimit;
-        const amount = this.currencyBalance;
+        const fee = this.currencyBalance * this.fee;
+        const amount = this.currencyBalance - fee;
         const quantity = amount / price;
         const trade: ITrade = {
             time,
@@ -64,6 +67,7 @@ export class Backtest {
             quantity,
             price,
             amount,
+            fee,
         };
         this.currencyBalance = 0;
         this.assetBalance = quantity;
@@ -73,15 +77,17 @@ export class Backtest {
     private sell(time: string, price: number) {
         const quantity = this.assetBalance;
         const amount = quantity * price;
+        const fee = amount * this.fee;
         const trade: ITrade = {
             time,
             side: "sell",
             quantity,
             price,
             amount,
+            fee,
         };
         this.assetBalance = 0;
-        this.currencyBalance = amount;
+        this.currencyBalance = amount - fee;
         this.trades.push(trade);
     }
 }
