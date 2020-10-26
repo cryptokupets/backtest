@@ -1,7 +1,7 @@
 {
-  "name": "backtest",
+  "name": "crypto-backtest",
   "version": "1.0.0-alpha",
-  "description": "Import market data from exchage",
+  "description": "Backtesting on market data imported from crypto exchange",
   "repository": {
     "type": "git",
     "url": "https://github.com/cryptokupets/backtest.git"
