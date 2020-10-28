@@ -2,7 +2,7 @@ import { IAdvice } from "./IAdvice";
 import { ICandle } from "./ICandle";
 import { IndicatorService } from "./IndicatorService";
 import { Strategy } from "./Strategy";
-import { StrategyCodeData } from "./StrategyCodeData";
+import { StrategyExecuteData } from "./StrategyExecuteData";
 
 export class Advisor {
     public static async execute(
@@ -12,7 +12,7 @@ export class Advisor {
         const {
             indicatorInputs,
             warmup: strategyWarmup,
-            strategyFunction,
+            execute,
         } = strategy;
         const indicatorKeys = indicatorInputs.map((e) => e.key);
 
@@ -33,7 +33,7 @@ export class Advisor {
             )
         ).then((results) => {
             // для каждой свечи попробовать найти вычисленный индикатор
-            const data: StrategyCodeData[] = candles.map((candle) => {
+            const data: StrategyExecuteData[] = candles.map((candle) => {
                 const { time } = candle;
                 const indicators: Array<{
                     key: string;
@@ -48,7 +48,7 @@ export class Advisor {
                     };
                 });
 
-                const dataItem: StrategyCodeData = new StrategyCodeData({
+                const dataItem: StrategyExecuteData = new StrategyExecuteData({
                     time: candle.time,
                     candle,
                     indicators,
@@ -59,7 +59,7 @@ export class Advisor {
 
             const advices: IAdvice[] = [];
             for (let i = warmup; i < data.length; i++) {
-                const side = strategyFunction(data.slice(i - warmup, i + 1));
+                const side = execute(data.slice(i - warmup, i + 1));
                 advices.push({
                     time: data[i].time,
                     side,

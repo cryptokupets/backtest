@@ -10,7 +10,7 @@ export class Backtest {
     public initialBalance: number = 0;
     public finalBalance: number = 0;
     public trades: ITrade[] = [];
-    public stoplossLimit: number = 0; // доля от цены открытия, на которую рыночная цена может упасть
+    public stoplossLevel: number = 0; // доля от цены открытия, на которую рыночная цена может упасть
     public fee: number = 0; // доля
 
     private currencyBalance: number = 0;
@@ -22,7 +22,7 @@ export class Backtest {
         candles?: ICandle[];
         strategy?: Strategy;
         initialBalance?: number;
-        stoplossLimit?: number;
+        stoplossLevel?: number;
         fee?: number;
     }) {
         Object.assign(this, options);
@@ -57,7 +57,7 @@ export class Backtest {
     }
 
     private buy(time: string, price: number) {
-        this.stoplossPrice = price * this.stoplossLimit;
+        this.stoplossPrice = price * this.stoplossLevel;
         const fee = this.currencyBalance * this.fee;
         const amount = this.currencyBalance - fee;
         const quantity = amount / price;

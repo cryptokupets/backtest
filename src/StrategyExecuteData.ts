@@ -1,6 +1,6 @@
 import { ICandle } from "./ICandle";
 
-export class StrategyCodeData {
+export class StrategyExecuteData {
     public time!: string;
     public candle!: ICandle;
     public indicators!: Array<{

@@ -3,13 +3,17 @@
     "display": "Node 12",
     "extends": "@tsconfig/node12/tsconfig.json",
     "compilerOptions": {
+        "declaration": true,
         "lib": ["es2019", "es2020.promise", "es2020.bigint", "es2020.string"],
         "module": "commonjs",
         "target": "es2019",
+        "sourceMap": true,
         "strict": true,
         "esModuleInterop": true,
         "skipLibCheck": true,
         "forceConsistentCasingInFileNames": true,
-        "outDir": "lib"
-    }
+        "outDir": "lib",
+        "typeRoots": ["./types", "./node_modules/@types"]
+    },
+    "include": ["src/**/*"]
 }

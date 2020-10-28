@@ -1,22 +1,15 @@
-import { StrategyCodeData } from "./StrategyCodeData";
+import { IIndicatorInput } from "./IIndicatorInput";
+import { StrategyExecuteData } from "./StrategyExecuteData";
 
 export class Strategy {
     public warmup!: number;
-    public strategyFunction!: (data: StrategyCodeData[]) => string; // buy || sell
-    public indicatorInputs!: Array<{
-        key: string;
-        name: string;
-        options: number[];
-    }>;
+    public execute!: (data: StrategyExecuteData[]) => string; // buy || sell
+    public indicatorInputs!: IIndicatorInput[];
 
     constructor(options: {
         warmup: number;
-        execute: (data: StrategyCodeData[]) => string;
-        indicatorInputs: Array<{
-            key: string;
-            name: string;
-            options: number[];
-        }>;
+        execute: (data: StrategyExecuteData[]) => string;
+        indicatorInputs: IIndicatorInput[];
     }) {
         Object.assign(this, options);
     }

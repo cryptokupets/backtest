@@ -1,4 +1,4 @@
-interface IIndicatorInput {
+export interface IIndicatorInput {
     key: string;
     name: string;
     options: number[];

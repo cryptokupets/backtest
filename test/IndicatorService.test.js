@@ -3,7 +3,7 @@ const { assert } = require("chai");
 const { IndicatorService } = require("../lib/IndicatorService");
 const fs = require("fs");
 
-describe.skip("IndicatorService", () => {
+describe("IndicatorService", () => {
     it("execute", function (done) {
         const candles = JSON.parse(fs.readFileSync("./test/data/data.json"));
         const options = {
