@@ -34,13 +34,13 @@ describe("Backtest", () => {
         const backtest = new Backtest(options);
 
         backtest.execute().then(() => {
-            console.log(backtest.finalBalance);
-            console.log(backtest.trades);
+            // console.log(backtest.finalBalance);
+            // console.log(backtest.trades);
             done();
         });
     });
 
-    it("stoploss", function () {
+    it("stoploss", function (done) {
         const candles = JSON.parse(fs.readFileSync("./test/data/data.json"));
         const execute = (data) => {
             return data[0].indicator("macd")[0] > 0 ? "buy" : "sell";
@@ -78,9 +78,11 @@ describe("Backtest", () => {
         const backtest1 = new Backtest(options1);
 
         Promise.all([backtest0.execute(), backtest1.execute()]).then(() => {
-            console.log(backtest0.finalBalance);
-            console.log(backtest1.finalBalance);
-            assert.equal(backtest0.finalBalance, backtest1.finalBalance, "Stoploss не влияет на результат");
+            // console.log(backtest0.finalBalance);
+            // console.log(backtest1.finalBalance);
+            const finalBalance0 = backtest0.trades[backtest0.trades.length - 1].amount;
+            const finalBalance1 = backtest1.trades[backtest1.trades.length - 1].amount;
+            assert.notEqual(finalBalance0, finalBalance1, "Stoploss не влияет на результат");
             done();
         });
     });

@@ -13,7 +13,7 @@ describe("IndicatorService", () => {
         };
 
         IndicatorService.execute(options).then((output) => {
-            console.log(output);
+            // console.log(output);
             assert.isArray(output, "массив данных");
             assert.isObject(output[0], "первый элемент является объектом");
             assert.isAtLeast(output.length, 1, "длина больше 1");

@@ -8,7 +8,6 @@ export class Backtest {
     public candles!: ICandle[];
     public strategy!: Strategy;
     public initialBalance: number = 0;
-    public finalBalance: number = 0;
     public trades: ITrade[] = [];
     public stoplossLevel: number = 0; // доля от цены открытия, на которую рыночная цена может упасть
     public fee: number = 0; // доля
@@ -33,26 +32,27 @@ export class Backtest {
         this.currencyBalance = initialBalance;
         this.advices = await Advisor.execute(candles, strategy);
         candles.forEach(this.candleHandler.bind(this));
-        this.finalBalance = this.currencyBalance
-            ? this.currencyBalance
-            : this.assetBalance / candles[candles.length - 1].close;
     }
 
-    private candleHandler(candle: ICandle) {
+    private candleHandler(candle: ICandle, index: number, candles: ICandle[]) {
         const { time, close: price } = candle;
-        const advice = this.advices.find((a) => a.time === time);
 
-        if (advice) {
-            const { side } = advice;
-            if (side === "buy" && this.currencyBalance > 0) {
-                this.buy(time, price);
-            } else if (side === "sell" && this.assetBalance > 0) {
-                this.sell(time, price);
-            }
-        }
-
-        if (price < this.stoplossPrice && this.assetBalance > 0) {
+        // всегда закрывается трейдом или стоп-лосс
+        if (
+            (index === candles.length - 1 || price < this.stoplossPrice) &&
+            this.assetBalance > 0
+        ) {
             this.sell(time, price);
+        } else {
+            const advice = this.advices.find((a) => a.time === time);
+            if (advice) {
+                const { side } = advice;
+                if (side === "buy" && this.currencyBalance > 0) {
+                    this.buy(time, price);
+                } else if (side === "sell" && this.assetBalance > 0) {
+                    this.sell(time, price);
+                }
+            }
         }
     }
 

@@ -25,7 +25,7 @@ describe("AdviceService", () => {
         });
 
         Advisor.execute(candles, strategy).then((advices) => {
-            console.log(advices);
+            // console.log(advices);
             done();
         });
     });
