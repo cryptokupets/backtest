@@ -1,6 +1,6 @@
 {
   "name": "crypto-backtest",
-  "version": "1.0.2-alpha",
+  "version": "1.1.0-alpha",
   "description": "Backtesting on market data imported from crypto exchange",
   "repository": {
     "type": "git",
@@ -21,8 +21,8 @@
     "name": "Dmitry Fokin"
   },
   "engines": {
-    "node": ">= 12.10.0",
-    "npm": ">= 6.11.3"
+    "node": ">= 12.16.1",
+    "npm": ">= 6.13.4"
   },
   "license": "MIT",
   "main": "lib/index.js",

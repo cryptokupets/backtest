@@ -1,26 +1,21 @@
 import { Advisor } from "./Advisor";
 import { BacktestBase } from "./BacktestBase";
 import { ICandle } from "./ICandle";
-import { Strategy } from "./Strategy";
 
-export class Backtest extends BacktestBase {
-    public strategy!: Strategy;
-
+export class IdealBacktest extends BacktestBase {
     constructor(options?: {
         candles?: ICandle[];
-        strategy?: Strategy;
         initialBalance?: number;
-        stoplossLevel?: number;
         fee?: number;
     }) {
         super(options);
         Object.assign(this, options);
     }
 
-    public async execute(): Promise<void> {
-        const { candles, strategy, initialBalance } = this;
+    public execute() {
+        const { candles, fee, initialBalance } = this;
         this.currencyBalance = initialBalance;
-        this.advices = await Advisor.execute(candles, strategy);
+        this.advices = Advisor.idealExecute(candles, fee);
         candles.forEach(this.candleHandler.bind(this));
         this.calculateRountrips();
     }
