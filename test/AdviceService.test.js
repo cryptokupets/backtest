@@ -5,28 +5,83 @@ const { Strategy } = require("../lib/Strategy");
 const fs = require("fs");
 
 describe("AdviceService", () => {
-    it("execute", function (done) {
-        const candles = JSON.parse(fs.readFileSync("./test/data/data.json"));
+    it.skip("execute", function (done) {
+        const { candles } = JSON.parse(
+            fs.readFileSync("./test/data/data1.json")
+        );
         const execute = (data) => {
-            const max0 = data[0].indicator("max")[0];
-            const max1 = data[1].indicator("max")[0];
-            return max0 > max1 ? "buy" : "sell";
+            console.log("execute: ", data);
+            const cci = data[0].indicator("cci").values[0];
+            return cci >= 100 ? "buy" : "sell";
         };
+
         const strategy = new Strategy({
             warmup: 1,
             execute,
             indicatorInputs: [
                 {
-                    key: "max",
-                    name: "max",
-                    options: [2],
+                    key: "cci",
+                    name: "cci",
+                    options: [5],
                 },
             ],
         });
 
         Advisor.execute(candles, strategy).then((advices) => {
-            // console.log(advices);
+            console.log(advices);
             done();
         });
+    });
+
+    // it("calculate", function (done) {
+    //     const { indicatorOutputs } = JSON.parse(
+    //         fs.readFileSync("./test/data/data1.json")
+    //     );
+    //     const strategyCode =
+    //         'const cci = indicators.cci[0]; return cci >= 100 ? "buy" : "sell"';
+    //     const indicators = {
+    //         cci: indicatorOutputs[0].values
+    //     };
+    //     console.log(indicators);
+
+    //     const advice = Advisor.calculate(indicators, strategyCode);
+    //     console.log(advice);
+    //     done();
+    // });
+
+    it("calculate", function () {
+        const strategyCode =
+            'const cci = indicators.cci[0]; return cci >= 100 ? "buy" : "sell"';
+        const indicators = [
+            {
+                cci: [100],
+            },
+            {
+                cci: [0],
+            },
+        ];
+
+        const advices = ["buy", "sell"];
+
+        for (let i = 0; i <= 1; i++) {
+            const advice = Advisor.calculate(indicators[i], strategyCode);
+            // console.log(advice);
+            assert.equal(advice, advices[i]);
+        }
+    });
+
+    it("buffer", function () {
+        const buffer = {};
+        const strategyCode =
+            'const cci = indicators.cci[0]; buffer.value = 1; return cci >= 100 ? "buy" : "sell"';
+        const indicators = {
+            cci: 100,
+        };
+
+        Advisor.calculate(indicators, strategyCode, buffer);
+        // console.log(buffer);
+        assert.isObject(buffer);
+        assert.property(buffer, "value");
+        assert.equal(buffer.value, 1);
     });
 });
