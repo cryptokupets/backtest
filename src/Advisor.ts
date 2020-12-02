@@ -1,8 +1,6 @@
 import { IAdvice } from "./IAdvice";
 import { ICandle } from "./ICandle";
-import { IIndicator } from "./IIndicator";
 import { IndicatorService } from "./IndicatorService";
-import { IStrategy } from "./IStrategy";
 import { Strategy } from "./Strategy";
 import { StrategyExecuteData } from "./StrategyExecuteData";
 
@@ -33,10 +31,10 @@ export class Advisor {
             // для каждой свечи попробовать найти вычисленный индикатор
             const data: StrategyExecuteData[] = candles.map((candle) => {
                 const { time } = candle;
-                const indicators: Array<{
+                const indicators: {
                     key: string;
                     outputs: number[];
-                }> = indicatorKeys.map((key, index) => {
+                }[] = indicatorKeys.map((key, index) => {
                     const indicator = results[index].find(
                         (e) => e.time === time
                     );
@@ -117,63 +115,16 @@ export class Advisor {
     }
 
     public static calculate(
-        indicators: Record<string, number[]>, // key position valueIndex
+        indicators: Record<string, number | number[]>, // key position valueIndex
         strategyCode: string,
         buffer?: any
     ): string {
         const execute = new Function("indicators", "buffer", strategyCode) as (
-            indicator: Record<string, number[]>,
+            indicator: Record<string, number | number[]>,
             buffer?: any
         ) => string;
         const advice = execute(indicators, buffer);
 
         return advice;
     }
-
-    // public static calculate(
-    //     indicators: Array<{
-    //         time: string;
-    //         output: Record<string, number[]>;
-    //     }>, // key position valueIndex
-    //     strategyCode: string
-    // ): string {
-    //     const execute = new Function("indicator", strategyCode) as (
-    //         indicator: Record<string, number[][]>
-    //     ) => string;
-    //     const advice = execute(indicator);
-    //     console.log(advice);
-    //     return advice;
-    // }
 }
-
-/*
-для принятия решения нужен набор аргументов
-но как стратегия понимает что это за аргументы?
-как обратиться к конкретному аргументу?
-и наоборот, как составить модель таким образом, чтобы аргументы генерировались как надо
-
-можно сделать табличку:
-ключ, индикатор с опциями, позиция последний или из предыдущих, индекс выходного параметра
-например:
-cci: cci(14) 0 0
-
-должна ли стратегия внутри себя вычислять индикаторы?
-я считаю что нет
-
-const cci = indicator("cci", [14], 2);
-
-использовать
-cci[1][0]
-
-это равнозначно тому чтобы индикаторы задать заранее
-indicators: {
-    key: string; // по умолчанию = name
-    name: string; // обязательно
-    options: number[]; // обязательно
-    warmup: number; // по умолчанию = 1
-}
-
-внутри кода обращаться каким-то образом по ключу
-по идее лучше всего прямо к аргументу
-первое число будет позицией, а второе номером выходного значения
-*/

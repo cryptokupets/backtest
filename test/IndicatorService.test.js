@@ -3,7 +3,7 @@ const { assert } = require("chai");
 const { IndicatorService } = require("../lib/IndicatorService");
 const fs = require("fs");
 
-describe("IndicatorService", () => {
+describe.skip("IndicatorService", () => {
     it("execute", function (done) {
         const { candles, indicatorOutputs } = JSON.parse(fs.readFileSync("./test/data/data1.json"));
         const options = {
@@ -13,7 +13,7 @@ describe("IndicatorService", () => {
         };
 
         IndicatorService.execute(options).then((output) => {
-            console.log(output);
+            // console.log(output);
             assert.isArray(output, "массив данных");
             assert.isObject(output[0], "первый элемент является объектом");
             assert.isAtLeast(output.length, 1, "длина больше 1");

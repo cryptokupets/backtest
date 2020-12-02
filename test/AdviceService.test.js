@@ -5,7 +5,7 @@ const { Strategy } = require("../lib/Strategy");
 const fs = require("fs");
 
 describe("AdviceService", () => {
-    it.skip("execute", function (done) {
+    it("execute", function (done) {
         const { candles } = JSON.parse(
             fs.readFileSync("./test/data/data1.json")
         );
@@ -32,22 +32,6 @@ describe("AdviceService", () => {
             done();
         });
     });
-
-    // it("calculate", function (done) {
-    //     const { indicatorOutputs } = JSON.parse(
-    //         fs.readFileSync("./test/data/data1.json")
-    //     );
-    //     const strategyCode =
-    //         'const cci = indicators.cci[0]; return cci >= 100 ? "buy" : "sell"';
-    //     const indicators = {
-    //         cci: indicatorOutputs[0].values
-    //     };
-    //     console.log(indicators);
-
-    //     const advice = Advisor.calculate(indicators, strategyCode);
-    //     console.log(advice);
-    //     done();
-    // });
 
     it("calculate", function () {
         const strategyCode =

@@ -4,29 +4,38 @@ import { IRoundtrip } from "./IRoundtrip";
 import { ITrade } from "./ITrade";
 
 export abstract class BacktestBase {
-    public candles: ICandle[] = [];
-    public initialBalance: number = 0;
-    public stoplossLevel: number = 0; // доля от цены открытия, на которую рыночная цена может упасть
-    public fee: number = 0; // доля
+    public readonly candles: ICandle[];
+    public readonly initialBalance: number;
+    public readonly stoplossLevel: number; // доля от цены открытия, на которую рыночная цена может упасть
+    public readonly fee: number; // доля комиссии
 
-    public trades: ITrade[] = [];
-    public roundtrips: IRoundtrip[] = [];
+    public readonly trades: ITrade[] = [];
+    public readonly roundtrips: IRoundtrip[] = [];
     public maxLosingSeriesLength: number = 0;
     public maxDrawDown: number = 0;
 
     protected currencyBalance: number = 0;
-    protected advices!: IAdvice[];
+    protected advices: IAdvice[] = [];
 
     private assetBalance: number = 0;
     private stoplossPrice: number = 0;
 
-    constructor(options?: {
-        candles?: ICandle[];
+    constructor(options: {
+        candles: ICandle[];
         initialBalance?: number;
-        stoplossLevel?: number;
+        stoplossLevel?: number; // TODO убрать отсюда
         fee?: number;
     }) {
-        Object.assign(this, options);
+        const {
+            candles,
+            initialBalance = 1,
+            stoplossLevel = 0,
+            fee = 0,
+        } = options;
+        this.candles = candles;
+        this.initialBalance = initialBalance;
+        this.stoplossLevel = stoplossLevel;
+        this.fee = fee;
     }
 
     protected calculateRountrips() {

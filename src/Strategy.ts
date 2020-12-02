@@ -1,16 +1,23 @@
-import { IIndicatorInput } from "./IIndicatorInput";
-import { StrategyExecuteData } from "./StrategyExecuteData";
-
 export class Strategy {
-    public warmup!: number;
-    public execute!: (data: StrategyExecuteData[]) => string; // buy || sell
-    public indicatorInputs!: IIndicatorInput[];
+    public readonly buffer: any = {};
+    public readonly code: string;
 
-    constructor(options: {
-        warmup: number;
-        execute: (data: StrategyExecuteData[]) => string;
-        indicatorInputs: IIndicatorInput[];
-    }) {
-        Object.assign(this, options);
+    constructor(code: string = 'return "";') {
+        this.code = code;
+        this.executeCode = new Function("indicators", "buffer", code) as (
+            indicator: Record<string, number | number[]>,
+            buffer: any
+        ) => string;
+    }
+
+    private executeCode: (
+        indicator: Record<string, number | number[]>,
+        buffer: any
+    ) => string;
+
+    public execute(
+        indicators: Record<string, number | number[]> // key position valueIndex
+    ): string {
+        return this.executeCode(indicators, this.buffer);
     }
 }
