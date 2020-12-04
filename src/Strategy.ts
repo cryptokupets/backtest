@@ -1,23 +1,42 @@
+import { ICandle } from "./ICandle";
+import { TStrategyCode } from "./TStrategyCode";
+
 export class Strategy {
     public readonly buffer: any = {};
     public readonly code: string;
 
     constructor(code: string = 'return "";') {
         this.code = code;
-        this.executeCode = new Function("indicators", "buffer", code) as (
-            indicator: Record<string, number | number[]>,
-            buffer: any
-        ) => string;
+        let executeCode: TStrategyCode;
+
+        try {
+            executeCode = new Function(
+                "candle",
+                "indicators",
+                "buffer",
+                code
+            ) as TStrategyCode;
+        } catch (error) {
+            executeCode = () => "";
+        }
+
+        this.executeCode = executeCode;
     }
 
-    private executeCode: (
-        indicator: Record<string, number | number[]>,
-        buffer: any
-    ) => string;
+    private executeCode: TStrategyCode;
 
     public execute(
-        indicators: Record<string, number | number[]> // key position valueIndex
+        candle: ICandle,
+        indicators: Record<string, number[]> // key valueIndex
     ): string {
-        return this.executeCode(indicators, this.buffer);
+        let side;
+
+        try {
+            side = this.executeCode(candle, indicators, this.buffer);
+        } catch (error) {
+            side = "";
+        }
+
+        return side;
     }
 }

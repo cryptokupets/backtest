@@ -9,14 +9,14 @@ export abstract class BacktestBase {
     public readonly stoplossLevel: number; // доля от цены открытия, на которую рыночная цена может упасть
     public readonly fee: number; // доля комиссии
 
-    public readonly trades: ITrade[] = [];
-    public readonly roundtrips: IRoundtrip[] = [];
+    public trades?: ITrade[];
+    public roundtrips?: IRoundtrip[];
+    public advices?: IAdvice[];
     public maxLosingSeriesLength: number = 0;
     public maxDrawDown: number = 0;
+    public finalBalance?: number;
 
-    protected currencyBalance: number = 0;
-    protected advices: IAdvice[] = [];
-
+    private currencyBalance: number = 0;
     private assetBalance: number = 0;
     private stoplossPrice: number = 0;
 
@@ -32,13 +32,58 @@ export abstract class BacktestBase {
             stoplossLevel = 0,
             fee = 0,
         } = options;
+
         this.candles = candles;
         this.initialBalance = initialBalance;
+        this.currencyBalance = initialBalance;
         this.stoplossLevel = stoplossLevel;
         this.fee = fee;
     }
 
-    protected calculateRountrips() {
+    protected calculateTrades(): ITrade[] {
+        if (this.advices === undefined) {
+            throw new Error("this.advices уже должны быть посчитаны");
+        }
+
+        this.trades = [];
+
+        const { advices } = this;
+
+        this.candles.forEach(
+            (candle: ICandle, index: number, candles: ICandle[]) => {
+                const { time, close: price } = candle;
+
+                // всегда закрывается трейдом или стоп-лосс
+                if (
+                    (index === candles.length - 1 ||
+                        price < this.stoplossPrice) &&
+                    this.assetBalance > 0
+                ) {
+                    this.sell(time, price);
+                } else {
+                    const advice = advices.find((a) => a.time === time);
+                    if (advice) {
+                        const { side } = advice;
+                        if (side === "buy" && this.currencyBalance > 0) {
+                            this.buy(time, price);
+                        } else if (side === "sell" && this.assetBalance > 0) {
+                            this.sell(time, price);
+                        }
+                    }
+                }
+            }
+        );
+
+        return this.trades;
+    }
+
+    protected calculateRountrips(): IRoundtrip[] {
+        if (this.trades === undefined) {
+            throw new Error("this.trades уже должны быть посчитаны");
+        }
+
+        const roundtrips: IRoundtrip[] = [];
+
         let roundtrip: IRoundtrip | null = null;
         let peak = this.initialBalance;
         let losingLength = 0;
@@ -75,39 +120,21 @@ export abstract class BacktestBase {
                     );
                 }
 
-                this.roundtrips.push(roundtrip);
+                roundtrips.push(roundtrip);
                 roundtrip = null;
             }
         });
-    }
 
-    protected candleHandler(
-        candle: ICandle,
-        index: number,
-        candles: ICandle[]
-    ) {
-        const { time, close: price } = candle;
+        this.roundtrips = roundtrips;
 
-        // всегда закрывается трейдом или стоп-лосс
-        if (
-            (index === candles.length - 1 || price < this.stoplossPrice) &&
-            this.assetBalance > 0
-        ) {
-            this.sell(time, price);
-        } else {
-            const advice = this.advices.find((a) => a.time === time);
-            if (advice) {
-                const { side } = advice;
-                if (side === "buy" && this.currencyBalance > 0) {
-                    this.buy(time, price);
-                } else if (side === "sell" && this.assetBalance > 0) {
-                    this.sell(time, price);
-                }
-            }
-        }
+        return roundtrips;
     }
 
     private buy(time: string, price: number) {
+        if (this.trades === undefined) {
+            throw new Error("this.trades не должен быть undefined");
+        }
+
         this.stoplossPrice = price * this.stoplossLevel;
         const fee = this.currencyBalance * this.fee;
         const amount = this.currencyBalance - fee;
@@ -126,6 +153,10 @@ export abstract class BacktestBase {
     }
 
     private sell(time: string, price: number) {
+        if (this.trades === undefined) {
+            throw new Error("this.trades не должен быть undefined");
+        }
+
         const quantity = this.assetBalance;
         const amount = quantity * price;
         const fee = amount * this.fee;

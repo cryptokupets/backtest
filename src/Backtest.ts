@@ -27,12 +27,14 @@ export class Backtest extends BacktestBase {
         this.indicatorInputs = indicatorInputs;
     }
 
-    public async calculateIndicators(): Promise<
+    private async calculateIndicators(): Promise<
         Record<string, IIndicator[]> | undefined
     > {
+        this.indicatorOutputs = {};
+
         const { indicatorInputs } = this;
+
         if (indicatorInputs !== undefined) {
-            this.indicatorOutputs = {};
             const { candles, indicatorOutputs } = this;
             const keys = Object.keys(indicatorInputs);
 
@@ -55,28 +57,38 @@ export class Backtest extends BacktestBase {
         return this.indicatorOutputs;
     }
 
-    public calculateAdvices(): IAdvice[] {
+    private calculateAdvices(): IAdvice[] {
+        if (this.indicatorOutputs === undefined) {
+            throw new Error("this.indicatorOutputs не должен быть undefined");
+        }
+
+        this.advices = [];
+
         const { advices, indicatorInputs, indicatorOutputs } = this;
 
-        if (indicatorInputs !== undefined && indicatorOutputs !== undefined) {
-            // FIXME необязательное условие
+        if (indicatorInputs !== undefined) {
             const { strategyCode, candles } = this;
             const strategy = new Strategy(strategyCode);
             const keys = Object.keys(indicatorInputs);
 
             candles.forEach((c) => {
                 const { time } = c;
-                const indicators: Record<string, number | number[]> = {};
+                const indicators: Record<string, number[]> = {};
 
-                keys.forEach((k) => {
-                    const i = indicatorOutputs[k].find((e) => e.time === time);
+                if (keys.length) {
+                    keys.forEach((k) => {
+                        const i = indicatorOutputs[k].find(
+                            (e) => e.time === time
+                        );
 
-                    if (i !== undefined) {
-                        indicators[k] = i.values;
-                    }
-                });
+                        if (i !== undefined) {
+                            indicators[k] = i.values;
+                        }
+                    });
+                }
 
-                const side = strategy.execute(indicators);
+                const side = strategy.execute(c, indicators); // готовность индикаторов необходимо проверять внутри стратегии, т.к. у стратегии уже есть и свеча и буффер для оценки ситуации
+
                 if (side) {
                     advices.push({
                         time,
@@ -90,14 +102,17 @@ export class Backtest extends BacktestBase {
     }
 
     public async execute(): Promise<Backtest> {
-        const { candles, initialBalance } = this;
-
         await this.calculateIndicators();
         this.calculateAdvices();
-        this.currencyBalance = initialBalance; // FIXME почему здесь?
-        candles.forEach(this.candleHandler.bind(this));
+        const trades = this.calculateTrades();
         this.calculateRountrips();
+        if (trades.length) {
+            const { amount, fee } = trades[trades.length - 1];
+            this.finalBalance = amount - fee;
+        } else {
+            this.finalBalance = this.initialBalance;
+        }
 
-        return Promise.resolve(this);
+        return this;
     }
 }

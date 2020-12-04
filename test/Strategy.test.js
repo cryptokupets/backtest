@@ -2,7 +2,7 @@ require("mocha");
 const { assert } = require("chai");
 const { Strategy } = require("../lib/Strategy");
 
-describe.skip("Strategy", () => {
+describe("Strategy", () => {
     it("execute", function () {
         const strategyCode =
             'const cci = indicators.cci; return cci >= 100 ? "buy" : "sell"';
@@ -18,7 +18,7 @@ describe.skip("Strategy", () => {
         const strategy = new Strategy(strategyCode);
 
         for (let i = 0; i <= 1; i++) {
-            const advice = strategy.execute(indicators[i]);
+            const advice = strategy.execute({}, indicators[i]);
             // console.log(advice);
             assert.equal(advice, advices[i]);
         }
@@ -32,7 +32,7 @@ describe.skip("Strategy", () => {
 
         const strategy = new Strategy(strategyCode);
         const { buffer } = strategy;
-        strategy.execute(indicators);
+        strategy.execute({}, indicators);
         // console.log(buffer);
         assert.isObject(buffer);
         assert.property(buffer, "value");
