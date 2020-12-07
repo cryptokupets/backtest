@@ -39,6 +39,52 @@ describe("Backtest", () => {
             .catch(done);
     });
 
+    it("trailing stop", function (done) {
+        const candles = JSON.parse(fs.readFileSync("./test/data/data3.json"));
+        const indicatorInputs = {
+            cci: {
+                name: "cci",
+                options: [5],
+            },
+        };
+        const strategyCode =
+            'const { cci } = indicators; let advice = ""; if (cci) { if (cci[0] >= 100) { advice = "buy"; } else if (cci <= -100) { advice = "sell"; } } return advice;';
+
+        const options0 = {
+            candles,
+            indicatorInputs,
+            strategyCode,
+            initialBalance: 100,
+            stoplossLevel: 0.999,
+            fee: 0,
+        };
+
+        const backtest0 = new Backtest(options0);
+
+        const options1 = {
+            candles,
+            indicatorInputs,
+            strategyCode,
+            initialBalance: 100,
+            stoplossLevel: 0.999,
+            trailingStop: true,
+            fee: 0,
+        };
+
+        const backtest1 = new Backtest(options1);
+
+        Promise.all([backtest0.execute(), backtest1.execute()])
+            .then(() => {
+                const finalBalance0 =
+                    backtest0.trades[backtest0.trades.length - 1].amount;
+                const finalBalance1 =
+                    backtest1.trades[backtest1.trades.length - 1].amount;
+                assert.notEqual(finalBalance0, finalBalance1);
+                done();
+            })
+            .catch(done);
+    });
+
     it("stoploss", function (done) {
         const candles = JSON.parse(fs.readFileSync("./test/data/data3.json"));
         const indicatorInputs = {
@@ -74,13 +120,6 @@ describe("Backtest", () => {
 
         Promise.all([backtest0.execute(), backtest1.execute()])
             .then(() => {
-                // console.log(
-                //     backtest0.indicatorOutputs.cci.map((e) => ({
-                //         time: e.time,
-                //         value: e.values[0],
-                //     }))
-                // );
-                // console.log(backtest0);
                 const finalBalance0 =
                     backtest0.trades[backtest0.trades.length - 1].amount;
                 const finalBalance1 =

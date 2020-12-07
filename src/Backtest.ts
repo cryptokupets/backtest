@@ -18,6 +18,7 @@ export class Backtest extends BacktestBase {
         initialBalance?: number;
         stoplossLevel?: number;
         fee?: number;
+        trailingStop?: boolean;
     }) {
         super(options);
 

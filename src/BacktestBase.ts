@@ -8,6 +8,7 @@ export abstract class BacktestBase {
     public readonly initialBalance: number;
     public readonly stoplossLevel: number; // доля от цены открытия, на которую рыночная цена может упасть
     public readonly fee: number; // доля комиссии
+    public readonly trailingStop: boolean;
 
     public trades?: ITrade[];
     public roundtrips?: IRoundtrip[];
@@ -25,12 +26,14 @@ export abstract class BacktestBase {
         initialBalance?: number;
         stoplossLevel?: number; // TODO убрать отсюда
         fee?: number;
+        trailingStop?: boolean;
     }) {
         const {
             candles,
             initialBalance = 1,
             stoplossLevel = 0,
             fee = 0,
+            trailingStop = false,
         } = options;
 
         this.candles = candles;
@@ -38,6 +41,7 @@ export abstract class BacktestBase {
         this.currencyBalance = initialBalance;
         this.stoplossLevel = stoplossLevel;
         this.fee = fee;
+        this.trailingStop = trailingStop;
     }
 
     protected calculateTrades(): ITrade[] {
@@ -47,26 +51,36 @@ export abstract class BacktestBase {
 
         this.trades = [];
 
-        const { advices } = this;
+        const { advices, stoplossLevel, trailingStop } = this;
 
         this.candles.forEach(
             (candle: ICandle, index: number, candles: ICandle[]) => {
-                const { time, close: price } = candle;
+                const { time, close: price, high, low } = candle;
+                const statusOpen = this.assetBalance > 0;
 
-                // всегда закрывается трейдом или стоп-лосс
-                if (
-                    (index === candles.length - 1 ||
-                        price < this.stoplossPrice) &&
-                    this.assetBalance > 0
-                ) {
-                    this.sell(time, price);
+                // если open то последний всегда закрывается
+                // если стоплосс, то закрывается по цене стоплосса
+                // если селл, то закрывается по текущей цене
+
+                if (statusOpen) {
+                    const { stoplossPrice } = this;
+                    if (index === candles.length - 1) {
+                        this.sell(time, price);
+                    } else if (low < stoplossPrice) {
+                        this.sell(time, stoplossPrice);
+                    } else if (trailingStop) {
+                        this.stoplossPrice = Math.max(
+                            stoplossPrice,
+                            high * stoplossLevel
+                        );
+                    }
                 } else {
                     const advice = advices.find((a) => a.time === time);
-                    if (advice) {
+                    if (advice !== undefined) {
                         const { side } = advice;
-                        if (side === "buy" && this.currencyBalance > 0) {
+                        if (side === "buy" && !statusOpen) {
                             this.buy(time, price);
-                        } else if (side === "sell" && this.assetBalance > 0) {
+                        } else if (side === "sell" && statusOpen) {
                             this.sell(time, price);
                         }
                     }
